@@ -1,14 +1,14 @@
 base = 10  # 2到36
 operators = {'+': '__add__', '-': '__sub__', '*': '__mul__',
              '%': '__mod__', '/': '__floordiv__', '**': lambda a, b: int(pow(a, b))}
-trace = True
+trace = False
 
 
 def handle_lexical(formula: str):
     digits = list(map(chr, [*range(ord('0'), ord('9') + 1), *range(ord('a'), ord('z') + 1)]))[:base]
 
     while '  ' in formula:
-        formula.replace('  ', ' ')
+        formula = formula.replace('  ', ' ')
     formula = formula.replace('  ', ' ')
     for i in range(len(formula) - 1):
         if formula[i] == ' ' and formula[i - 1] in operators and formula[i + 1] in operators:
@@ -52,10 +52,8 @@ def handle_syntax(l: list):
                 if text == ')':
                     break
                 subs.append(parser(text))
-            if text != ')':
-                raise SyntaxError(f'Unexcepted EOL found')
-            if not subs:
-                raise SyntaxError('Empty () found')
+            assert text == ')', SyntaxError('Unexcepted EOL found')
+            assert subs, SyntaxError('Empty () found')
             return subs
         elif text == ')':
             raise SyntaxError('Unexcepted ")" token')
@@ -63,6 +61,7 @@ def handle_syntax(l: list):
             return text
     l = iter(l)
     res = parser(next(l))
+    assert list(l) == [], 'Unexpected trailing characters'
     return res
 
 
@@ -112,32 +111,37 @@ def term(tree, eval_level):  # 计算高优先级运算
 
 def execute(formula):
     funcs = ['handle_lexical', 'handle_syntax', 'handle_semantic']
-    [formula := eval(func)(formula) for func in funcs]
+    # [formula := eval(func)(formula) for func in funcs]
+
+    for func in funcs:
+        formula = eval(func)(formula)
+        print(formula)
     return formula
 
 
 def test():
     formulas = [
-        '1+ 2*3',
-        '(1 + 2) * 3',
-        '106 + 7 * (5 - 2)',
-        '(((3+2)*3)*5-7) - (6 *(3+8)/2)',
-        '(3*6)**4-114',
+        # '1+ 2*3',
+        # '(1 + 2) * 3',
+        # '106 + 7 * (5 - 2)',
+        # '(((3+2)*3)*5-7) - (6 *(3+8)/2)',
+        # '(3*6)**4-114',
 
         # '(1+2',
+        # '(1+2))',
+        # '() + 66',
         # '517  **  90+4--2'
-        # '(((3+2)*3)*5-7) - (6 *(3+8)2)',  # innvalid
-        # '() + 66',  # innvalid
+        # '(((3+2)*3)*5-7) - (6 *(3+8)2)',
     ]
     for f in formulas:
         print(execute(f))
 
 
 if __name__ == '__main__':
-    # test()
-    while True:
-        s = input('>')
-        if s == 'exit()':
-            print('Exiting.')
-            exit(0)
-        execute(s)
+    test()
+    # while True:
+    #     s = input('>')
+    #     if s == 'exit()':
+    #         print('Exiting.')
+    #         exit(0)
+    #     execute(s)
