@@ -9,7 +9,6 @@ def handle_lexical(formula: str):
 
     while '  ' in formula:
         formula = formula.replace('  ', ' ')
-    formula = formula.replace('  ', ' ')
     for i in range(len(formula) - 1):
         if formula[i] == ' ' and formula[i - 1] in operators and formula[i + 1] in operators:
             raise SyntaxError('Space between operators error')
