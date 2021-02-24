@@ -111,11 +111,7 @@ def term(tree, eval_level):  # 计算高优先级运算
 
 def execute(formula):
     funcs = ['handle_lexical', 'handle_syntax', 'handle_semantic']
-    # [formula := eval(func)(formula) for func in funcs]
-
-    for func in funcs:
-        formula = eval(func)(formula)
-        print(formula)
+    [formula := eval(func)(formula) for func in funcs]
     return formula
 
 
@@ -138,10 +134,10 @@ def test():
 
 
 if __name__ == '__main__':
-    test()
-    # while True:
-    #     s = input('>')
-    #     if s == 'exit()':
-    #         print('Exiting.')
-    #         exit(0)
-    #     execute(s)
+    # test()
+    while True:
+        s = input('>')
+        if s == 'exit()':
+            print('Exiting.')
+            exit(0)
+        execute(s)
