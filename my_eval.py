@@ -10,8 +10,8 @@ def handle_lexical(formula: str):
     while '  ' in formula:
         formula = formula.replace('  ', ' ')
     for i in range(len(formula) - 1):
-        if formula[i] == ' ' and formula[i - 1] in operators and formula[i + 1] in operators:
-            raise SyntaxError('Space between operators error')
+        assert not(formula[i] == ' ' and formula[i - 1] in operators and formula[i + 1]
+                   in operators), SyntaxError('Space between operators error')
     formula = '(' + formula.replace(' ', '') + ')'
 
     l, cur, empty, i, le = [], '', True, 0, len(formula)
@@ -21,6 +21,7 @@ def handle_lexical(formula: str):
             empty, cur = False, cur + formula[i]
         elif formula[i] in list(operators) + ['(', ')']:
             if not empty:
+                assert not cur.startswith('0'), SyntaxError('Leading zero found')
                 l.append(int(cur, base))
                 cur = ''
                 empty = True
@@ -42,7 +43,7 @@ def handle_syntax(l: list):
         if text == None:
             return []
         elif text == '(':
-            subs = []
+            subs, first, flag = [], True, 1
             while True:
                 try:
                     text = next(l)
@@ -50,9 +51,16 @@ def handle_syntax(l: list):
                     raise SyntaxError('Unexcepted EOL found')
                 if text == ')':
                     break
+                if text == '-' and first:
+                    flag = -1
+                first = False
                 subs.append(parser(text))
             assert text == ')', SyntaxError('Unexcepted EOL found')
-            assert subs, SyntaxError('Empty () found')
+            assert subs, SyntaxError('Empty "()" found')
+            if flag == -1:
+                assert len(subs) > 1, SyntaxError('"(-)" found')
+                # assert isinstance(subs[1], int), SyntaxError(f'Unexpected {subs[1]} token, int expected')
+                subs = [subs[1] * flag] + subs[2:] if len(subs) > 2 else subs[1] * flag
             return subs
         elif text == ')':
             raise SyntaxError('Unexcepted ")" token')
@@ -71,7 +79,10 @@ def handle_semantic(t, eval_level=1):
         trace = True
 
     a = term(t, eval_level)
-    while list_checker(t) and t[0] in '+-':
+    while list_checker(t):
+        assert isinstance(t[0], str), SyntaxError('Operator expected, ' + str(t[0]) + ' found')
+        if t[0] not in '+-':
+            break
         func = operators[t.pop(0)]
         c = term(t, eval_level)
         if not isinstance(c, int):
@@ -116,27 +127,31 @@ def execute(formula):
 
 def test():
     formulas = [
-        # '1+ 2*3',
-        # '(1 + 2) * 3',
-        # '106 + 7 * (5 - 2)',
-        # '(((3+2)*3)*5-7) - (6 *(3+8)/2)',
-        # '(3*6)**4-114',
+        '1+ 2*3',
+        '(1 + 2) * 3',
+        '(3*6)**4-114',
+        '3 + (-4 + 5) * 2',
+        '106 + 7 * (5 - 2)',
+        '(((3+2)*3)*5-7) - (6 *(3+8)/2)',
 
-        # '(1+2',
-        # '(1+2))',
-        # '() + 66',
-        # '517  **  90+4--2'
-        # '(((3+2)*3)*5-7) - (6 *(3+8)2)',
+        # '007', # Leading zero found
+        # '3* *4',  # Space between operators error
+        # '6+ (-)',  # "(-)" found
+        # '(1+2',  # Unexcepted EOL found
+        # '(1+2))',  # Unexpected trailing characters
+        # '() + 66',  # Empty "()" found
+        # '517  **  90+4--2' # Invalid operator: --
+        # '(((3+2)*3)*5-7) - (6 *(3+8)2)',  # Operator expected, 2 found
     ]
     for f in formulas:
-        print(execute(f))
+        print(' '.join([f, '=', str(execute(f))]))
 
 
 if __name__ == '__main__':
     # test()
     while True:
-        s = input('>')
+        s = input('> ')
         if s == 'exit()':
             print('Exiting.')
             exit(0)
-        execute(s)
+        print(execute(s))
